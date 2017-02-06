@@ -48,20 +48,21 @@ namespace AkkaNet.Poc.Core.Actor
         #endregion
        
         private readonly Setting _setting;
-        private readonly IPurchaseOrderModelRetriever _purchaseOrderModelRetriever;
+        private readonly Func<IPOModelRetriever> _poRetrieverGenerator;
+        private IPOModelRetriever _poRetriever;
         private readonly IExceptionTyper _exceptionTyper;
         private readonly ICancelable _cancelPublishing;
         private IActorRef _eventsource;
 
-        public PORetrieverActor(IPurchaseOrderModelRetriever purchaseOrderModelRetriever, IExceptionTyper exceptionTyper)
-            :this(new Setting(3, TimeSpan.FromSeconds(5)), purchaseOrderModelRetriever, exceptionTyper )
-        {            
+        public PORetrieverActor(Func<IPOModelRetriever> poRetrieverGenerator, IExceptionTyper exceptionTyper)
+            : this(new Setting(3, TimeSpan.FromSeconds(5)), poRetrieverGenerator, exceptionTyper)
+        {
         }
 
-        public PORetrieverActor(Setting setting, IPurchaseOrderModelRetriever purchaseOrderModelRetriever, IExceptionTyper exceptionTyper)
+        public PORetrieverActor(Setting setting, Func<IPOModelRetriever> poRetrieverGenerator, IExceptionTyper exceptionTyper)
         {
             _setting = setting;
-            _purchaseOrderModelRetriever = purchaseOrderModelRetriever;
+            _poRetrieverGenerator = poRetrieverGenerator;
             _exceptionTyper = exceptionTyper;
             _cancelPublishing = new Cancelable(Context.System.Scheduler);
 
@@ -71,6 +72,7 @@ namespace AkkaNet.Poc.Core.Actor
         protected override void PreStart()
         {
            _eventsource = Context.ActorOf(Context.DI().Props<EventSourceActor>(), "eventsource");
+           _poRetriever = _poRetrieverGenerator();
         }
 
         protected override void PostStop()
@@ -100,7 +102,7 @@ namespace AkkaNet.Poc.Core.Actor
             PurchaseOrderModel model = null;
             try
             {
-                model = await _purchaseOrderModelRetriever.GetPurchaseOrder(getPurchaseOrder.PoNumber);
+                model = await _poRetriever.GetPurchaseOrder(getPurchaseOrder.PoNumber);
             }
             catch (Exception ex) when (IsTransientException(ex) && MaxRetryReached(getPurchaseOrder))
             {

@@ -67,7 +67,7 @@
     <Compile Include="Actor\EventSourceActor.cs" />
     <Compile Include="Placeholder\IExceptionTyper.cs" />
     <Compile Include="Entity\PurchaseOrderEntity.cs" />
-    <Compile Include="Placeholder\IPurchaseOrderModelRetriever.cs" />
+    <Compile Include="Placeholder\IPOModelRetriever.cs" />
     <Compile Include="Placeholder\PurchaseOrderModel.cs" />
     <Compile Include="Actor\PORequestedActor.cs" />
     <Compile Include="Actor\PORetrieverActor.cs" />

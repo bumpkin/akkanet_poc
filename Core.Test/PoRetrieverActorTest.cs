@@ -19,14 +19,13 @@ namespace Core.Test
         private AutoFacDependencyResolver _autoFacDependencyResolver;
 
         private Mock<IExceptionTyper> _exceptionTyper;
-        private Mock<IPurchaseOrderModelRetriever> _retriever;
+        private Mock<IPOModelRetriever> _retriever;
         private IActorRef _retrieverActor;
         private Fixture _fixture;
         
         private PurchaseOrderModel _model;
         private string _poNumber;
         
-
         [TestMethod]
         [TestCategory("Unit")]
         public void Should_GetPurchaseOrder()
@@ -126,10 +125,11 @@ namespace Core.Test
             
             _autoFacDependencyResolver = new AutoFacDependencyResolver(container, Sys);
 
-            _retriever = new Mock<IPurchaseOrderModelRetriever>();
+            _retriever = new Mock<IPOModelRetriever>();
             _exceptionTyper = new Mock<IExceptionTyper>();
             var setting = new PORetrieverActor.Setting(1,TimeSpan.FromMilliseconds(500));
-            _retrieverActor = Sys.ActorOf(Props.Create(() => new PORetrieverActor(setting, _retriever.Object, _exceptionTyper.Object)));
+            _retrieverActor =
+                Sys.ActorOf(Props.Create(() => new PORetrieverActor(setting, () => _retriever.Object, _exceptionTyper.Object)));
         }
     }
 }
