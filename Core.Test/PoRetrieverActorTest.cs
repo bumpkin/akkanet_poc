@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.DI.AutoFac;
@@ -120,9 +121,11 @@ namespace Core.Test
             _fixture = new Fixture();  
 
             var builder = new ContainerBuilder();
-            builder.RegisterType<EventSourceActor>();
+            builder.RegisterType<EventSourceActorSpy>().As<EventSourceActor>();
             var container = builder.Build();
-            
+
+            //var actor =container.Resolve<EventSourceActor>();
+
             _autoFacDependencyResolver = new AutoFacDependencyResolver(container, Sys);
 
             _retriever = new Mock<IPOModelRetriever>();
@@ -130,6 +133,17 @@ namespace Core.Test
             var setting = new PORetrieverActor.Setting(1,TimeSpan.FromMilliseconds(500));
             _retrieverActor =
                 Sys.ActorOf(Props.Create(() => new PORetrieverActor(setting, () => _retriever.Object, _exceptionTyper.Object)));
+        }
+
+        public class EventSourceActorSpy : EventSourceActor
+        {
+            public static List<object> ReceivedMessages = new List<object>();
+
+            protected override Task Handler(SendPurchaseOrderEvent sendPurchaseOrderEvent)
+            {
+                ReceivedMessages.Add(sendPurchaseOrderEvent);
+                return Task.FromResult<object>(null);
+            }            
         }
     }
 }

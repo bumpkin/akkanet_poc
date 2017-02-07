@@ -70,9 +70,9 @@ namespace AkkaNet.Poc.Core.Actor
         }
 
         protected override void PreStart()
-        {
-           _eventsource = Context.ActorOf(Context.DI().Props<EventSourceActor>(), "eventsource");
-           _poRetriever = _poRetrieverGenerator();
+        {                   
+            _eventsource = Context.ActorOf(Context.DI().Props<EventSourceActor>(), "eventsource");
+            _poRetriever = _poRetrieverGenerator();
         }
 
         protected override void PostStop()

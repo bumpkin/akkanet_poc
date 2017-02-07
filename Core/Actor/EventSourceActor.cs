@@ -41,7 +41,7 @@ namespace AkkaNet.Poc.Core.Actor
             ReceiveAsync<SendPurchaseOrderEvent>(Handler);
         }
 
-        private Task Handler(SendPurchaseOrderEvent sendPurchaseOrderEvent)
+        protected virtual Task Handler(SendPurchaseOrderEvent sendPurchaseOrderEvent)
         {
             var message = JsonConvert.SerializeObject(sendPurchaseOrderEvent, Formatting.Indented);
             File.AppendAllText(_path, message + Environment.NewLine);
