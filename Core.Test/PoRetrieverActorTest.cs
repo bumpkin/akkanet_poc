@@ -123,9 +123,7 @@ namespace Core.Test
             var builder = new ContainerBuilder();
             builder.RegisterType<EventSourceActorSpy>().As<EventSourceActor>();
             var container = builder.Build();
-
-            //var actor =container.Resolve<EventSourceActor>();
-
+            
             _autoFacDependencyResolver = new AutoFacDependencyResolver(container, Sys);
 
             _retriever = new Mock<IPOModelRetriever>();

@@ -80,7 +80,7 @@ namespace AkkaNet.Poc.Core.Actor
             _cancelPublishing.Cancel(false);
         }
 
-        private async Task HandleGetPurchaseOrder(GetPurchaseOrder getPurchaseOrder)
+        protected virtual async Task HandleGetPurchaseOrder(GetPurchaseOrder getPurchaseOrder)
         {
             var model = await GetPurchaseOrderModel(getPurchaseOrder);
             if (model == null)

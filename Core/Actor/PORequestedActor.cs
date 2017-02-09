@@ -16,10 +16,23 @@ namespace AkkaNet.Poc.Core.Actor
         {
             public RequestPurchaseOrder(string poNumber)
             {
-                PoNumber = poNumber;
+                PONumber = poNumber;
             }
 
-            public string PoNumber { get; }
+            public string PONumber { get; }
+        }
+
+        public class RequestPurchaseOrderReceived
+        {
+            public RequestPurchaseOrderReceived(string poNumber, string state)
+            {
+                PONumber = poNumber;
+                State = state;
+            }
+
+            public string PONumber { get; }
+
+            public string State { get; }
         }
 
         public class ReceivePurchaseOrderEntity
@@ -31,10 +44,12 @@ namespace AkkaNet.Poc.Core.Actor
 
             public PurchaseOrderEntity PurchaseOrder { get; }
         }
+        
         #endregion
 
         private IActorRef _eventsource;
         private IActorRef _retriever;
+        private string _poNumber;
 
         public PORequestedActor()
         {
@@ -51,8 +66,11 @@ namespace AkkaNet.Poc.Core.Actor
         {
             ReceiveAsync<RequestPurchaseOrder>(req =>
             {
-                _retriever.Tell(new PORetrieverActor.GetPurchaseOrder(req.PoNumber));
-                Become(RequestReceived);
+                _poNumber = req.PONumber;
+                _eventsource.Tell(new EventSourceActor.SendPurchaseOrderEvent(_poNumber, "RequestPurchaseOrder Received", "Success"));
+                Sender.Tell(new RequestPurchaseOrderReceived(_poNumber, "Processing"));
+                _retriever.Tell(new PORetrieverActor.GetPurchaseOrder(_poNumber));
+                Become(RequestReceived);                
                 return Task.FromResult<object>(null);
             });
         }
@@ -72,7 +90,11 @@ namespace AkkaNet.Poc.Core.Actor
                 return Task.FromResult<object>(null);
             });
 
-            //todo: receive Fault
+            ReceiveAsync<Failure>(entity =>
+            {
+                _eventsource.Tell(new EventSourceActor.SendPurchaseOrderEvent(_poNumber, "PO Retrieved", "Failed", exception:entity.Exception));
+                return Task.FromResult<object>(null);
+            });          
         }
         
     }
