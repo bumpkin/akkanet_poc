@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.DI.Core;
 using AkkaNet.Poc.Core.Entity;
@@ -17,10 +16,23 @@ namespace AkkaNet.Poc.Core.Actor
         {
             public RequestPurchaseOrder(string poNumber)
             {
-                PoNumber = poNumber;
+                PONumber = poNumber;
             }
 
-            public string PoNumber { get; }
+            public string PONumber { get; }
+        }
+
+        public class RequestPurchaseOrderReceived
+        {
+            public RequestPurchaseOrderReceived(string poNumber, string state)
+            {
+                PONumber = poNumber;
+                State = state;
+            }
+
+            public string PONumber { get; }
+
+            public string State { get; }
         }
 
         public class ReceivePurchaseOrderEntity
@@ -30,17 +42,18 @@ namespace AkkaNet.Poc.Core.Actor
                 PurchaseOrder = purchaseOrder;
             }
 
-            public PurchaseOrderEntity PurchaseOrder { get; private set; }
+            public PurchaseOrderEntity PurchaseOrder { get; }
         }
+        
         #endregion
 
         private IActorRef _eventsource;
         private IActorRef _retriever;
+        private string _poNumber;
 
         public PORequestedActor()
         {
-            ReceiveAsync<RequestPurchaseOrder>(HandleRequestPurchaseOrder);
-            ReceiveAsync<ReceivePurchaseOrderEntity>(HandlePurchaseOrderEntity);
+            WaitingForRequest();            
         }
 
         protected override void PreStart()
@@ -49,23 +62,40 @@ namespace AkkaNet.Poc.Core.Actor
             _retriever = Context.ActorOf(Context.DI().Props<PORetrieverActor>(), "retriever");
         }
 
-        private Task HandleRequestPurchaseOrder(RequestPurchaseOrder req)
-        {           
-            _retriever.Tell(new PORetrieverActor.GetPurchaseOrder(req.PoNumber));
-            return Task.FromResult<object>(null);
-        }
-
-        private Task HandlePurchaseOrderEntity(ReceivePurchaseOrderEntity entity)
+        private void WaitingForRequest()
         {
-            _eventsource.Tell(new EventSourceActor.SendPurchaseOrderEvent(entity.PurchaseOrder.PONumber, "PO Retrieved", "Success"));
-            
-            // todo: validate purchase order
-
-            // todo: determine if dependency is needed and get those dependency
-
-            // todo: send PO to FC
-
-            return Task.FromResult<object>(null);
+            ReceiveAsync<RequestPurchaseOrder>(req =>
+            {
+                _poNumber = req.PONumber;
+                _eventsource.Tell(new EventSourceActor.SendPurchaseOrderEvent(_poNumber, "RequestPurchaseOrder Received", "Success"));
+                Sender.Tell(new RequestPurchaseOrderReceived(_poNumber, "Processing"));
+                _retriever.Tell(new PORetrieverActor.GetPurchaseOrder(_poNumber));
+                Become(RequestReceived);                
+                return Task.FromResult<object>(null);
+            });
         }
+
+        private void RequestReceived()
+        {
+            ReceiveAsync<ReceivePurchaseOrderEntity>(entity =>
+            {
+                _eventsource.Tell(new EventSourceActor.SendPurchaseOrderEvent(entity.PurchaseOrder.PONumber, "PO Retrieved", "Success"));
+
+                // todo: validate purchase order
+
+                // todo: determine if dependency is needed and get those dependency
+
+                // todo: send PO to FC
+
+                return Task.FromResult<object>(null);
+            });
+
+            ReceiveAsync<Failure>(entity =>
+            {
+                _eventsource.Tell(new EventSourceActor.SendPurchaseOrderEvent(_poNumber, "PO Retrieved", "Failed", exception:entity.Exception));
+                return Task.FromResult<object>(null);
+            });          
+        }
+        
     }
 }

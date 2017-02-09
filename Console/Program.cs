@@ -16,7 +16,9 @@ namespace Console
             builder.RegisterType<EventSourceActor>();
             builder.RegisterType<PORetrieverActor>();            
 
-            builder.RegisterType<PurchaseOrderModelRetrieverTest>().As<IPurchaseOrderModelRetriever>();
+            builder.Register<Func<IPOModelRetriever>>(x => () => new PurchaseOrderModelRetrieverTest());
+            builder.RegisterType<ExceptionTyper>().As<IExceptionTyper>();
+
             var container = builder.Build();
 
             var system = ActorSystem.Create("MySystem");
@@ -29,8 +31,8 @@ namespace Console
         }
     }
 
-    internal class PurchaseOrderModelRetrieverTest : IPurchaseOrderModelRetriever
-    {
+    internal class PurchaseOrderModelRetrieverTest : IPOModelRetriever
+    {       
         private int count = 0;
 
         public Task<PurchaseOrderModel> GetPurchaseOrder(string poNumber)
@@ -44,6 +46,15 @@ namespace Console
             {
                 PONumber = poNumber
             });
+        }
+    }
+
+
+    internal class ExceptionTyper : IExceptionTyper
+    {
+        public bool IsTransientException(Exception exception)
+        {
+            return true;
         }
     }
 }

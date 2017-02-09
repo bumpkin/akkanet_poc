@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.DI.AutoFac;
@@ -19,14 +20,13 @@ namespace Core.Test
         private AutoFacDependencyResolver _autoFacDependencyResolver;
 
         private Mock<IExceptionTyper> _exceptionTyper;
-        private Mock<IPurchaseOrderModelRetriever> _retriever;
+        private Mock<IPOModelRetriever> _retriever;
         private IActorRef _retrieverActor;
         private Fixture _fixture;
         
         private PurchaseOrderModel _model;
         private string _poNumber;
         
-
         [TestMethod]
         [TestCategory("Unit")]
         public void Should_GetPurchaseOrder()
@@ -121,15 +121,27 @@ namespace Core.Test
             _fixture = new Fixture();  
 
             var builder = new ContainerBuilder();
-            builder.RegisterType<EventSourceActor>();
+            builder.RegisterType<EventSourceActorSpy>().As<EventSourceActor>();
             var container = builder.Build();
             
             _autoFacDependencyResolver = new AutoFacDependencyResolver(container, Sys);
 
-            _retriever = new Mock<IPurchaseOrderModelRetriever>();
+            _retriever = new Mock<IPOModelRetriever>();
             _exceptionTyper = new Mock<IExceptionTyper>();
             var setting = new PORetrieverActor.Setting(1,TimeSpan.FromMilliseconds(500));
-            _retrieverActor = Sys.ActorOf(Props.Create(() => new PORetrieverActor(setting, _retriever.Object, _exceptionTyper.Object)));
+            _retrieverActor =
+                Sys.ActorOf(Props.Create(() => new PORetrieverActor(setting, () => _retriever.Object, _exceptionTyper.Object)));
+        }
+
+        public class EventSourceActorSpy : EventSourceActor
+        {
+            public static List<object> ReceivedMessages = new List<object>();
+
+            protected override Task Handler(SendPurchaseOrderEvent sendPurchaseOrderEvent)
+            {
+                ReceivedMessages.Add(sendPurchaseOrderEvent);
+                return Task.FromResult<object>(null);
+            }            
         }
     }
 }
