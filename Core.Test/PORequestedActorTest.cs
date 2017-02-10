@@ -86,7 +86,7 @@ namespace Core.Test
 
             var builder = new ContainerBuilder();
             builder.RegisterType<EventSourceActorSpy>().As<EventSourceActor>();
-            builder.RegisterType<PORetrieverActorSpy>().As<PORetrieverActor>();
+            builder.RegisterType<PORetrieverCoordinatorActorSpy>().As<PORetrieverCoordinatorActor>();
             var container = builder.Build();
             
             _autoFacDependencyResolver = new AutoFacDependencyResolver(container, Sys);
@@ -106,21 +106,11 @@ namespace Core.Test
             }
         }
 
-        public class PORetrieverActorSpy : PORetrieverActor
+        public class PORetrieverCoordinatorActorSpy : PORetrieverCoordinatorActor
         {
             public static List<object> ReceivedMessages = new List<object>();
-
-            public PORetrieverActorSpy(Func<IPOModelRetriever> poRetrieverGenerator, IExceptionTyper exceptionTyper) 
-                : base(poRetrieverGenerator, exceptionTyper)
-            {
-            }
-
-            public PORetrieverActorSpy(Setting setting, Func<IPOModelRetriever> poRetrieverGenerator, IExceptionTyper exceptionTyper) 
-                : base(setting, poRetrieverGenerator, exceptionTyper)
-            {
-            }
-
-            protected override Task HandleGetPurchaseOrder(GetPurchaseOrder getPurchaseOrder)
+            
+            protected override Task HandleGetPurchaseOrder(PORetrieverActor.GetPurchaseOrder getPurchaseOrder)
             {
                 ReceivedMessages.Add(getPurchaseOrder);
                 return Task.FromResult<object>(null);

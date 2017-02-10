@@ -48,7 +48,7 @@ namespace AkkaNet.Poc.Core.Actor
         #endregion
 
         private IActorRef _eventsource;
-        private IActorRef _retriever;
+        private IActorRef _retrieverCoordinator;
         private string _poNumber;
 
         public PORequestedActor()
@@ -58,8 +58,9 @@ namespace AkkaNet.Poc.Core.Actor
 
         protected override void PreStart()
         {
-            _eventsource = Context.ActorOf(Context.DI().Props<EventSourceActor>(), "eventsource");
-            _retriever = Context.ActorOf(Context.DI().Props<PORetrieverActor>(), "retriever");
+            _eventsource = Context.ActorOf(Context.DI().Props<EventSourceActor>(), "EventSource");            
+            _retrieverCoordinator = Context.ActorOf(Context.DI().Props<PORetrieverCoordinatorActor>(), "PORetrieverCoordinator");
+            base.PreStart();
         }
 
         private void WaitingForRequest()
@@ -69,7 +70,7 @@ namespace AkkaNet.Poc.Core.Actor
                 _poNumber = req.PONumber;
                 _eventsource.Tell(new EventSourceActor.SendPurchaseOrderEvent(_poNumber, "RequestPurchaseOrder Received", "Success"));
                 Sender.Tell(new RequestPurchaseOrderReceived(_poNumber, "Processing"));
-                _retriever.Tell(new PORetrieverActor.GetPurchaseOrder(_poNumber));
+                _retrieverCoordinator.Tell(new PORetrieverActor.GetPurchaseOrder(_poNumber));
                 Become(RequestReceived);                
                 return Task.FromResult<object>(null);
             });

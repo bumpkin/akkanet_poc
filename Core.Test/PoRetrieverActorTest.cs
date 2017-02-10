@@ -15,7 +15,7 @@ using Ploeh.AutoFixture;
 namespace Core.Test
 {
     [TestClass]
-    public class PoRetrieverActorTest : TestKit
+    public class PORetrieverActorTest : TestKit
     {
         private AutoFacDependencyResolver _autoFacDependencyResolver;
 

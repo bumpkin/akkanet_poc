@@ -14,7 +14,8 @@ namespace Console
         {
             var builder = new ContainerBuilder();
             builder.RegisterType<EventSourceActor>();
-            builder.RegisterType<PORetrieverActor>();            
+            builder.RegisterType<PORetrieverActor>();
+            builder.RegisterType<PORetrieverCoordinatorActor>().SingleInstance();    
 
             builder.Register<Func<IPOModelRetriever>>(x => () => new PurchaseOrderModelRetrieverTest());
             builder.RegisterType<ExceptionTyper>().As<IExceptionTyper>();

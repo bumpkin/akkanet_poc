@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Akka.Actor;
+using Akka.Actor.Internal;
 using Akka.DI.Core;
 using AkkaNet.Poc.Core.Entity;
 using AkkaNet.Poc.Core.Placeholder;
@@ -73,6 +74,7 @@ namespace AkkaNet.Poc.Core.Actor
         {                   
             _eventsource = Context.ActorOf(Context.DI().Props<EventSourceActor>(), "eventsource");
             _poRetriever = _poRetrieverGenerator();
+            base.PreStart();
         }
 
         protected override void PostStop()

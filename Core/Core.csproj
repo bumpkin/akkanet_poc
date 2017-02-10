@@ -65,6 +65,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Actor\EventSourceActor.cs" />
+    <Compile Include="Actor\PORetrieverCoordinatorActor.cs" />
     <Compile Include="Placeholder\IExceptionTyper.cs" />
     <Compile Include="Entity\PurchaseOrderEntity.cs" />
     <Compile Include="Placeholder\IPOModelRetriever.cs" />
